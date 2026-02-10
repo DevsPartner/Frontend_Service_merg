@@ -1,13 +1,21 @@
 "use client";
+<<<<<<< HEAD
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+=======
+// src/app/login/page.jsx
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+<<<<<<< HEAD
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -16,6 +24,14 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const { login } = useAuth();
 
+=======
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
   const redirectTo = searchParams.get("redirect") || "/products";
 
   async function handleSubmit(e) {
@@ -24,17 +40,39 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+<<<<<<< HEAD
       await login(email, password);
       router.push(redirectTo);
       router.refresh();
     } catch (err) {
       setError(err.message || "Anmeldung fehlgeschlagen.");
+=======
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Login fehlgeschlagen");
+      }
+
+      // Success: redirect
+      router.push(redirectTo);
+      router.refresh();
+
+    } catch (err) {
+      setError(err.message);
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
     } finally {
       setLoading(false);
     }
   }
 
   return (
+<<<<<<< HEAD
     <div className="flex h-screen w-full overflow-hidden bg-white dark:bg-[#1c1e22]">
       {/* --- LEFT SIDE: Marketing Panel (Hidden on Mobile) --- */}
       <div className="hidden lg:flex lg:w-3/5 relative bg-black items-end p-16">
@@ -178,5 +216,88 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+=======
+    <section className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <form 
+        className="card bg-ui tls-shadow-md m-auto h-fit w-full max-w-sm p-1" 
+        onSubmit={handleSubmit}
+      >
+        <div className="p-8">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-title text-2xl font-bold mb-2">
+              Willkommen zurück
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Melde dich an, um fortzufahren
+            </p>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-red-600 dark:text-red-400 text-sm">
+                {error}
+              </p>
+            </div>
+          )}
+
+          {/* Form Fields */}
+          <div className="space-y-5">
+            <div className="field">
+              <label htmlFor="email" className="text-title text-sm font-medium mb-2 block">
+                E-Mail
+              </label>
+              <input 
+                id="email" 
+                type="email"
+                className="input sz-md variant-mixed w-full" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)} 
+                placeholder="deine@email.de"
+                required 
+                disabled={loading}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="password" className="text-title text-sm font-medium mb-2 block">
+                Passwort
+              </label>
+              <input 
+                id="password" 
+                type="password" 
+                className="input sz-md variant-mixed w-full" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)} 
+                placeholder="••••••••"
+                required 
+                disabled={loading}
+              />
+            </div>
+
+            <button 
+              type="submit"
+              className="btn variant-primary sz-md w-full disabled:opacity-50 disabled:cursor-not-allowed" 
+              disabled={loading}
+            >
+              {loading ? "Anmeldung läuft..." : "Anmelden"}
+            </button>
+          </div>
+
+          {/* Footer - Register Link */}
+          <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            Noch kein Konto?{" "}
+            <Link 
+              href="/register" 
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              Jetzt registrieren
+            </Link>
+          </div>
+        </div>
+      </form>
+    </section>
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
   );
 }

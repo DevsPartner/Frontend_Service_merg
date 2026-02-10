@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
+<<<<<<< HEAD
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState(""); // Add missing email state
@@ -11,12 +12,36 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false); // Add loading state for better UX
   const router = useRouter();
 
+=======
+  const [name, setName] = useState(""); // Single name field
+  const [username, setUsername] = useState(""); // Optional
+  const [cartId, setCartId] = useState(123); // You need to get real cartId
+  const [totalAmount, setTotalAmount] = useState("0.00"); // You need to calculate this
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  // You need to get these from your cart/context
+  const getCartItems = () => {
+    // Replace with actual cart items from your state/context
+    return [
+      {
+        product_Id: 1,
+        productName: "Test Product",
+        price: "29.99",
+        quantity: 1
+      }
+    ];
+  };
+
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     
     try {
+<<<<<<< HEAD
       const res = await fetch("http://localhost:8003/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -36,6 +61,40 @@ export default function CheckoutPage() {
       setEmail("");
       router.push("/order-success");
     } catch (err) {
+=======
+      const orderData = {
+        cartId: cartId, // Get from your cart
+        totalAmount: totalAmount, // Calculate from cart
+        name: name, // Single name field
+        username: username || "customer", // Default if empty
+        gender: null, // Optional
+        // Remove address and email fields
+        items: getCartItems(), // Get from cart
+        orderDate: new Date().toISOString()
+      };
+      
+      console.log("Sending order:", orderData); // Debug log
+      
+      const res = await fetch("http://localhost:8003/orders/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderData),
+      });
+      
+      const responseData = await res.json(); // Get response body
+      console.log("Response:", responseData); // Debug log
+      
+      if (!res.ok) {
+        throw new Error(responseData.detail || "Bestellung fehlgeschlagen");
+      }
+      
+      // Clear form and redirect on success
+      setName("");
+      setUsername("");
+      router.push(`/payment?order_id=${responseData.orderId}&total=${totalAmount}`);
+    } catch (err) {
+      console.error("Order error:", err);
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
       setError(err.message || "Fehler bei Bestellung");
     } finally {
       setLoading(false);
@@ -58,6 +117,7 @@ export default function CheckoutPage() {
             />
             <input 
               type="text" 
+<<<<<<< HEAD
               placeholder="Adresse" 
               required
               className="w-full border rounded-lg p-3 bg-transparent text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -72,6 +132,14 @@ export default function CheckoutPage() {
               value={email} 
               onChange={e => setEmail(e.target.value)} 
             />
+=======
+              placeholder="Benutzername (optional)" 
+              className="w-full border rounded-lg p-3 bg-transparent text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              value={username} 
+              onChange={e => setUsername(e.target.value)} 
+            />
+            {/* Removed address and email fields */}
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
           </div>
           
           {error && (

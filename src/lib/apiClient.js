@@ -1,14 +1,27 @@
 // lib/api-client.js
+<<<<<<< HEAD
 // Zentrale Stelle für alle Backend-Aufrufe mit JWT und User-ID Handling
 
 const BASE_URLS = {
   auth: process.env.AUTH_SERVICE_URL || "http://localhost:8000",
   products: process.env.PRODUCT_SERVICE_URL || "http://localhost:8001",
   cart: process.env.CART_SERVICE_URL || "http://localhost:8009",
+=======
+// WARUM: Zentrale Stelle für alle Backend-Aufrufe
+// - Verhindert Code-Duplikation
+// - Einheitliches Error Handling
+// - Einfache Konfigurationsänderungen
+
+const BASE_URLS = {
+  auth: process.env.AUTH_SERVICE_URL || "http://localhost:8004",
+  products: process.env.PRODUCT_SERVICE_URL || "http://localhost:8000",
+  cart: process.env.CART_SERVICE_URL || "http://localhost:8001",
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
   orders: process.env.ORDER_SERVICE_URL || "http://localhost:8003",
 };
 
 /**
+<<<<<<< HEAD
  * Decode JWT to extract user_id (simple implementation)
  * For production, use a proper JWT library
  */
@@ -30,6 +43,8 @@ function decodeJWT(token) {
 }
 
 /**
+=======
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
  * Generische Fetch-Funktion für Backend-Services
  * @param {string} service - Service-Name (auth, products, cart, orders)
  * @param {string} path - API-Pfad
@@ -44,6 +59,7 @@ export async function backendFetch(service, path, options = {}, request = null) 
     ...options.headers,
   };
 
+<<<<<<< HEAD
   // JWT Cookie vom Client an Backend weiterleiten
   let userId = null;
   if (request) {
@@ -73,6 +89,17 @@ export async function backendFetch(service, path, options = {}, request = null) 
     headers["X-User-Id"] = "1"; // Temporär für Tests
   }
 
+=======
+  // WICHTIG: JWT Cookie vom Client an Backend weiterleiten
+  if (request) {
+    const cookieName = process.env.JWT_COOKIE_NAME || "auth_token";
+    const token = request.cookies.get(cookieName)?.value;
+    if (token) {
+      headers["Cookie"] = `${cookieName}=${token}`;
+    }
+  }
+
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
   try {
     const res = await fetch(url, {
       ...options,
@@ -84,6 +111,7 @@ export async function backendFetch(service, path, options = {}, request = null) 
     console.error(`Backend fetch failed (${service}):`, err);
     throw err;
   }
+<<<<<<< HEAD
 }
 
 /**
@@ -107,4 +135,6 @@ export async function clientFetch(service, path, options = {}) {
     console.error(`Client fetch failed (${service}):`, err);
     throw err;
   }
+=======
+>>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
 }

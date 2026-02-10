@@ -1,28 +1,14 @@
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { CartProvider } from "@/context/CartContext";
-import { AuthProvider } from "@/context/AuthContext";
-
-
-// Replace Geist with Inter
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-export const metadata = {
-  title: "TECH.CORE | Premium Electronics",
-  description: "Next-Gen Tech for your digital life",
-};
+import { AuthProvider } from '@/components/Navbar/AuthContext';
+import Navbar from '@/components/Navbar/Navbar';
+import './globals.css';
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="de" className="dark">
-      <body className={`${inter.variable} font-sans antialiased`}>
+    <html lang="en">
+      <body>
         <AuthProvider>
-          <CartProvider>
-            {children}
-          </CartProvider>
+          <Navbar />
+          {children}
         </AuthProvider>
       </body>
     </html>

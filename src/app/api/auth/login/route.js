@@ -1,56 +1,59 @@
-import { NextResponse } from "next/server";
-import { backendFetch } from "@/lib/apiClient";
+// src/app/api/auth/login/route.js
+import { NextResponse } from 'next/server';
+
+const LOGIN_SERVICE_URL = process.env.LOGIN_SERVICE_URL || 'http://localhost:8004';
 
 export async function POST(request) {
   try {
     const body = await request.json();
     const { email, password } = body;
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "E-Mail und Passwort sind erforderlich" },
-        { status: 400 }
-      );
-    }
-
-    // Backend-Aufruf
-    const res = await backendFetch(
-      "auth",
-      "/auth/login",
-      {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      }
-    );
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: err.detail || "Login fehlgeschlagen" },
-        { status: res.status }
-      );
-    }
-
-    // JWT Cookie vom Backend übernehmen
-    const backendSetCookie = res.headers.get("set-cookie");
-    const backendData = await res.json();
-
-    const response = NextResponse.json({
-      success: true,
-      user: backendData.user || null,
+    // Call your login service
+    const response = await fetch(`${LOGIN_SERVICE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
     });
 
-    // Set-Cookie Header weiterleiten
-    if (backendSetCookie) {
-      response.headers.set("set-cookie", backendSetCookie);
+    let data;
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = { detail: text };
     }
 
-    return response;
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data.detail || 'Login failed' },
+        { status: response.status }
+      );
+    }
 
-  } catch (err) {
-    console.error("Login error:", err);
+    // Success - return token
+    const res = NextResponse.json({
+      success: true,
+      user: data.user,
+      token: data.access_token,
+    });
+
+    // Set HTTP-only cookie with token
+    res.cookies.set('auth_token', data.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return res;
+  } catch (error) {
+    console.error('Login API error:', error);
     return NextResponse.json(
-      { error: "Interner Serverfehler" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
