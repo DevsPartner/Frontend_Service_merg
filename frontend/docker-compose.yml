@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # Main Forecast Service (UNCHANGED)
+  mlops-forecast:
+    build: .
+    container_name: mlops-forecast
+    ports:
+      - "8008:8008"  # This is OK - forecasting service
+    environment:
+      - ORDER_SERVICE_URL=http://order-service:8001/orders
+      - PRODUCT_SERVICE_URL=http://product-service:8002/products
+      - PAYMENT_SERVICE_URL=http://payment-service:8003/payments
+    volumes:
+      - ./models:/app/models
+      - ./mlruns:/app/mlruns
+    depends_on:
+      - order-service
+      - product-service
+      - payment-service
+    networks:
+      - mlops-network
+
+  # Mock Order Service - CHANGE PORT
+  order-service:
+    image: python:3.11-slim
+    container_name: order-service
+    ports:
+      - "18001:8001"  # Changed from 8001 to 18001
+    working_dir: /app
+    volumes:
+      - ./mock_services:/app
+    command: >
+      sh -c "pip install fastapi uvicorn pandas &&
+             uvicorn order_mock:app --host 0.0.0.0 --port 8001"
+    networks:
+      - mlops-network
+
+  # Mock Product Service - CHANGE PORT
+  product-service:
+    image: python:3.11-slim
+    container_name: product-service
+    ports:
+      - "18002:8002"  # Changed from 8002 to 18002
+    working_dir: /app
+    volumes:
+      - ./mock_services:/app
+    command: >
+      sh -c "pip install fastapi uvicorn pandas &&
+             uvicorn product_mock:app --host 0.0.0.0 --port 8002"
+    networks:
+      - mlops-network
+
+  # Mock Payment Service - CHANGE PORT
+  payment-service:
+    image: python:3.11-slim
+    container_name: payment-service
+    ports:
+      - "18003:8003"  # Changed from 8003 to 18003
+    working_dir: /app
+    volumes:
+      - ./mock_services:/app
+    command: >
+      sh -c "pip install fastapi uvicorn pandas &&
+             uvicorn payment_mock:app --host 0.0.0.0 --port 8003"
+    networks:
+      - mlops-network
+
+  # MLflow - CHANGE PORT
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: mlflow
+    ports:
+      - "15000:5000"  # Changed from 5000 to 15000
+    environment:
+      - MLFLOW_TRACKING_URI=file:/mlruns
+    volumes:
+      - ./mlruns:/mlruns
+    command: >
+      mlflow server
+      --backend-store-uri /mlruns
+      --default-artifact-root /mlruns
+      --host 0.0.0.0
+      --port 5000
+    networks:
+      - mlops-network
+
+  # Monitoring - CHANGE PORTS
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "19090:9090"  # Changed from 9090 to 19090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - mlops-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "13000:3000"  # Changed from 3000 to 13000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - mlops-network
+
+networks:
+  mlops-network:
+    driver: bridge
+
+volumes:
+  grafana_data:
