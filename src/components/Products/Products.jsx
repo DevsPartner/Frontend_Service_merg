@@ -1,75 +1,55 @@
 "use client";
 import { useState, useEffect } from "react";
-<<<<<<< HEAD
-import { useCart } from "@/context/CartContext";
-=======
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/components/Navbar/AuthContext";
-import { cartApi } from "@/lib/cartApi";
-import Recommendations from "@/components/Recommendations/Recommendations";
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
+import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
+import Recommendations from "@/components/recommendations/Recommendations";
+import { Loader2, ShoppingCart, Star, Sparkles } from "lucide-react";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-<<<<<<< HEAD
-  const [addingToCart, setAddingToCart] = useState(null); 
- 
-  const { addToCart } = useCart();
-=======
   const [addingToCart, setAddingToCart] = useState(null);
-  const [trainingModel, setTrainingModel] = useState(false);
-  
-  const router = useRouter();
+
+  const { addToCart } = useCart();
   const { user } = useAuth();
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
+  const router = useRouter();
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  async function fetchProducts() {
+  const fetchProducts = async () => {
     try {
-      const res = await fetch("/api/products");
-<<<<<<< HEAD
-=======
-      
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Fehler beim Laden");
-      }
-<<<<<<< HEAD
-=======
-      
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
+      const res = await fetch("/products?skip=0&limit=100");
       const data = await res.json();
-      setProducts(data);
+
+      if (data && Array.isArray(data)) {
+        setProducts(data);
+      } else if (data && Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        console.error("API did not return an array:", data);
+        setProducts([]);
+      }
     } catch (err) {
-      console.error("Failed to fetch products:", err);
-      setError(err.message);
+      setError("Failed to fetch products");
+      setProducts([]);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-<<<<<<< HEAD
   const handleAddToCart = async (product) => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
     setAddingToCart(product.id);
-    
     try {
-      // Simulate a small delay for better UX feel or handle async cart logic
-      await addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image_link,
-        description: product.description,
-        quantity: 1
-      });
-      // Optional: Replace alert with a toast notification library like react-hot-toast
-      console.log(`${product.name} added to cart`);
+      await addToCart(product);
     } catch (err) {
       console.error("Cart error:", err);
     } finally {
@@ -77,422 +57,98 @@ export default function ProductsPage() {
     }
   };
 
-  // --- LOADING STATE ---
-=======
-  async function handleAddToCart(product) {
-    // Check if user is logged in
-    if (!user) {
-      alert('Bitte melde dich zuerst an!');
-      router.push('/login?redirect=/products');
-      return;
-    }
-
-    setAddingToCart(product.id);
-    
-    try {
-      await cartApi.addToCart(user.id, user.name, {
-        product_id: product.id,
-        product_name: product.name,
-        product_price: product.price,
-        image_link: product.imageLink || 'https://placehold.co/800x800/e5e7eb/6b7280?text=No+Image',
-        quantity: 1,
-      });
-
-      alert("Produkt wurde zum Warenkorb hinzugefügt!");
-      
-    } catch (err) {
-      console.error('Add to cart error:', err);
-      alert('Fehler: ' + err.message);
-    } finally {
-      setAddingToCart(null);
-    }
-  }
-
-  async function handleTrainModel() {
-    if (!user || !user.isAdmin) {
-      alert("Only admins can trigger model training");
-      return;
-    }
-
-    setTrainingModel(true);
-    try {
-      const response = await fetch('/api/recommendations', {
-        method: 'POST',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        alert('✅ Model training started! ' + (data.message || ''));
-        // Refresh recommendations after a delay
-        setTimeout(() => {
-          window.location.reload();
-        }, 5000);
-      } else {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to start training');
-      }
-    } catch (err) {
-      console.error('Training error:', err);
-      alert('❌ Error: ' + err.message);
-    } finally {
-      setTrainingModel(false);
-    }
-  }
-
-  // Loading State
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-<<<<<<< HEAD
-=======
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 animate-pulse">
-              Loading Products...
-            </h1>
-            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/3"></div>
-          </div>
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-md animate-pulse">
-                <div className="h-72 bg-gray-300 dark:bg-gray-700"></div>
-                <div className="p-6 space-y-3">
-                  <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full"></div>
-<<<<<<< HEAD
-                  <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
-=======
-                  <div className="flex justify-between items-center pt-4">
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
-                    <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-20"></div>
-                    <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded w-24"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#0B1120]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+          <p className="text-slate-400 font-medium">Curating Collection...</p>
         </div>
       </div>
     );
   }
 
-<<<<<<< HEAD
-  // --- ERROR STATE ---
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center py-12">
-        <div className="max-w-md mx-auto px-4 text-center bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Fehler aufgetreten</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-          <button onClick={() => window.location.reload()} className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all">Erneut versuchen</button>
-=======
-  // Error State
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center py-12">
-        <div className="max-w-md mx-auto px-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Oops!</h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-            >
-              Erneut versuchen
-            </button>
-          </div>
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
-        </div>
-      </div>
-    );
-  }
-
-<<<<<<< HEAD
-  // --- PRODUCT GRID ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-900 py-12">
+    <div className="min-h-screen bg-[#0B1120] text-white py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product) => (
-            <article
-              key={product.id}
-              className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
-            >
-              {/* Image Container */}
-<div className="relative h-72 bg-gray-100 dark:bg-gray-700 overflow-hidden">
-  <img 
-    src={product.image_link}
-    alt={product.name} 
-    // Optimization: Add 'loading="lazy"' for performance
-    loading="lazy"
-    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-    onError={(e) => {
-      // Prevents infinite loop if placeholder also fails
-      e.currentTarget.onerror = null; 
-      e.currentTarget.src = "https://placehold.co/800x800/1e293b/white?text=Tech+Image";
-    }} 
-  />
-  {/* Darker overlay on hover for better text contrast */}
-  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors duration-300" />
-</div>
+        
+        {/* Header Section */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-black tracking-tight mb-2 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+            Premium Products
+          </h1>
+          <p className="text-slate-400 text-lg">Modern technology for the modern creator.</p>
+        </div>
 
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {product.name}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 leading-relaxed h-10">
-                  {product.description}
-                </p>
+        {/* AI Recommendations Section */}
+        <section className="mb-16">
+          <div className="flex items-center gap-2 mb-6">
+            <Sparkles className="text-emerald-400 w-5 h-5" />
+            <h2 className="text-xl font-bold">AI Recommended for You</h2>
+          </div>
+          <Recommendations />
+        </section>
 
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
-                  <div className="flex flex-col">
-                    <span className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Preis</span>
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {Number(product.price).toFixed(2)}€
-                    </span>
+        {/* Product Grid */}
+        {error ? (
+          <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-3xl text-red-400">
+            {error}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {Array.isArray(products) && products.length > 0 ? (
+              products.map((product) => (
+                <div 
+                  key={product.id} 
+                  className="group bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-3xl overflow-hidden hover:border-blue-500/50 transition-all duration-300 shadow-xl"
+                >
+                  {/* Image Placeholder */}
+                  <div className="aspect-square bg-slate-800 relative overflow-hidden">
+                    <div className="absolute inset-0 flex items-center justify-center text-slate-700">
+                      <ShoppingCart size={48} />
+                    </div>
+                    {product.isNew && (
+                      <span className="absolute top-4 left-4 bg-blue-600 text-[10px] font-black uppercase px-2 py-1 rounded">New</span>
+                    )}
                   </div>
 
-                  <button 
-                    onClick={() => handleAddToCart(product)}
-                    disabled={addingToCart === product.id}
-                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 disabled:cursor-not-allowed"
-                  >
-                    {addingToCart === product.id ? (
-                      <span className="flex items-center gap-2">
-                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        Lädt...
-                      </span>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                        Hinzufügen
-                      </>
-                    )}
-                  </button>
+                  {/* Content */}
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-lg group-hover:text-blue-400 transition-colors">{product.name}</h3>
+                      <div className="flex items-center gap-1 text-amber-400">
+                        <Star size={14} fill="currentColor" />
+                        <span className="text-xs font-bold text-slate-400">{product.rating || '4.9'}</span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-slate-400 text-sm mb-6 line-clamp-2">{product.description}</p>
+                    
+                    <div className="flex items-center justify-between mt-auto">
+                      <span className="text-xl font-black">€{product.price}</span>
+                      <button
+                        onClick={() => handleAddToCart(product)}
+                        disabled={addingToCart === product.id}
+                        className="p-3 bg-blue-600 hover:bg-blue-500 rounded-2xl transition-all active:scale-90 disabled:opacity-50"
+                      >
+                        {addingToCart === product.id ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <ShoppingCart size={20} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </div>
-=======
-  // Empty State
-  if (products.length === 0) {
-    return (
-      <>
-        <Recommendations />
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center py-12">
-          <div className="max-w-md mx-auto px-4 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Keine Produkte gefunden</h2>
-            <p className="text-gray-600 dark:text-gray-400">Schau später wieder vorbei!</p>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Products Grid
-  return (
-    <>
-      {/* Add Recommendations section at the top */}
-      <Recommendations />
-      
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                All Products
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Browse our complete collection
-              </p>
-            </div>
-            
-            {/* Admin Controls */}
-            {user?.isAdmin && (
-              <div className="flex gap-3">
-                <button
-                  onClick={handleTrainModel}
-                  disabled={trainingModel}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {trainingModel ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Training...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      Train AI Model
-                    </>
-                  )}
-                </button>
-                
-                <button
-                  onClick={() => window.open('http://localhost:8006/docs', '_blank')}
-                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                  API Docs
-                </button>
-                
-                <button
-                  onClick={() => window.open(`http://localhost:8006/simulate/${user.id}`, '_blank')}
-                  className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  Preview
-                </button>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-20 text-slate-500">
+                No products found.
               </div>
             )}
           </div>
-          
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product) => (
-              <article
-                key={product.id}
-                className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
-              >
-                {/* Image */}
-                <div className="relative h-72 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 overflow-hidden">
-                  <img 
-                    src={product.imageLink}
-                    alt={product.name} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-                    onError={(e) => {
-                      e.currentTarget.src = "https://placehold.co/800x800/e5e7eb/6b7280?text=No+Image";
-                    }} 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  {/* MLOps Badge - Show if product is in recommendations */}
-                  {user && (
-                    <div className="absolute top-3 right-3">
-                      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
-                        AI Recommended
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {product.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 leading-relaxed h-10">
-                    {product.description}
-                  </p>
-
-                  {/* Stats Row */}
-                  <div className="flex items-center gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>In Stock</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>Fast Delivery</span>
-                    </div>
-                  </div>
-
-                  {/* Price and Button */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <div className="flex flex-col">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 mb-1">Preis</span>
-                      <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {product.price}€
-                      </span>
-                    </div>
-
-                    <button 
-                      onClick={() => handleAddToCart(product)}
-                      disabled={addingToCart === product.id}
-                      className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {addingToCart === product.id ? (
-                        <>
-                          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Wird hinzugefügt...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          Hinzufügen
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          {/* MLOps Info Banner */}
-          <div className="mt-12 p-6 bg-gradient-to-r from-gray-900 to-black rounded-2xl shadow-lg">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">MLOps Recommender System</h3>
-                  <p className="text-gray-300">Personalized recommendations powered by AI</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => window.open('http://localhost:8006/health', '_blank')}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-lg border border-white/20 transition-colors"
-                >
-                  Health Check
-                </button>
-                <button
-                  onClick={() => window.open('http://localhost:8006/model-info', '_blank')}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-lg border border-white/20 transition-colors"
-                >
-                  Model Info
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
-    </>
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
+    </div>
   );
 }

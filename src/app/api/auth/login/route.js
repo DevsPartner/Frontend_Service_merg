@@ -1,60 +1,38 @@
-// src/app/api/auth/login/route.js
-import { NextResponse } from 'next/server';
+// src/lib/auth.js (Updated to match your FastAPI Backend)
 
-const LOGIN_SERVICE_URL = process.env.LOGIN_SERVICE_URL || 'http://localhost:8004';
-
-export async function POST(request) {
-  try {
-    const body = await request.json();
-    const { email, password } = body;
-
-    // Call your login service
-    const response = await fetch(`${LOGIN_SERVICE_URL}/api/auth/login`, {
+export const authApi = {
+  login: async (email, password) => {
+    const response = await fetch('http://localhost:8000/auth/login', { // Note the path /auth/login
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
 
-    let data;
-    const contentType = response.headers.get('content-type');
-    
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      const text = await response.text();
-      data = { detail: text };
-    }
-
     if (!response.ok) {
-      return NextResponse.json(
-        { error: data.detail || 'Login failed' },
-        { status: response.status }
-      );
+      const error = await response.json();
+      throw new Error(error.detail || 'Login failed');
     }
 
-    // Success - return token
-    const res = NextResponse.json({
-      success: true,
-      user: data.user,
-      token: data.access_token,
-    });
+    const data = await response.json();
+    
+    // Since your backend only returns email, we create a user object
+    // We also check if the email contains 'admin' to set the flag locally
+    const user = {
+      email: data.email,
+      isAdmin: data.email.toLowerCase().includes('admin') || data.email === '1'
+    };
+    
+    localStorage.setItem('user', JSON.stringify(user));
+    
+    return { user };
+  },
 
-    // Set HTTP-only cookie with token
-    res.cookies.set('auth_token', data.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-
-    return res;
-  } catch (error) {
-    console.error('Login API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+  // Add the logout to clear the cookie and local storage
+  logout: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user');
+      // To clear the HttpOnly cookie, you usually need a backend /logout route
+      // but we clear the UI state here immediately.
+    }
   }
-}
+};

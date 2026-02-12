@@ -1,5 +1,5 @@
 // dashboardCalculations.js
-import { clientFetch } from '../api-client';
+import { clientFetch } from '@/lib/apiClient';
 /**
  * 1. Define TrendDirection here to avoid import errors.
  * This fixes the "TrendDirection is not defined" crash.
