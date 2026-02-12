@@ -1,23 +1,49 @@
 'use client';
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MoreVertical } from 'lucide-react';
+import { 
+  ComposedChart, // Changed to ComposedChart to allow both Bars and Lines
+  Bar, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Cell
+} from 'recharts';
+import { MoreVertical, TrendingUp } from 'lucide-react';
 import { MonthlyData } from '../../types';
 
 interface SalesChartProps {
-  data: MonthlyData[];
+  data: MonthlyData[]; // Your data should now include a 'predicted' field
 }
 
-// Custom Tooltip Component for a cleaner look
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700 p-3 rounded-xl shadow-2xl">
-        <p className="text-slate-400 text-xs mb-1 font-medium">{label}</p>
-        <p className="text-indigo-400 font-bold text-lg">
-          €{Number(payload[0].value).toLocaleString()}
-        </p>
+      <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700 p-4 rounded-xl shadow-2xl">
+        <p className="text-slate-400 text-xs mb-2 font-medium uppercase tracking-wider">{label}</p>
+        <div className="space-y-2">
+          {/* Actual Sales Row */}
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-slate-400 text-sm">Actual:</span>
+            <span className="text-white font-bold">
+              €{Number(payload[0].value).toLocaleString()}
+            </span>
+          </div>
+          {/* AI Prediction Row (only shows if predicted data exists) */}
+          {payload[1] && (
+            <div className="flex items-center justify-between gap-4 border-t border-slate-700 pt-2">
+              <span className="text-emerald-400 text-sm flex items-center gap-1">
+                <TrendingUp size={12} /> AI Forecast:
+              </span>
+              <span className="text-emerald-400 font-bold">
+                €{Number(payload[1].value).toLocaleString()}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -31,8 +57,13 @@ export const SalesChart: React.FC<SalesChartProps> = ({ data }) => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-lg font-bold text-white">Monthly Sales</h2>
-          <p className="text-slate-400 text-sm mt-1">Revenue overview for the year</p>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-white">Sales Analysis</h2>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+              AI Powered
+            </span>
+          </div>
+          <p className="text-slate-400 text-sm mt-1">Actual revenue vs. AI predictions</p>
         </div>
         <button className="p-2 rounded-full hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
           <MoreVertical size={20} />
@@ -43,17 +74,11 @@ export const SalesChart: React.FC<SalesChartProps> = ({ data }) => {
       <div className="flex-1 w-full min-h-[250px]">
         {data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-              
-              {/* Define Gradients */}
+            <ComposedChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#818cf8" stopOpacity={1} /> {/* Indigo-400 */}
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0.6} /> {/* Indigo-500 */}
-                </linearGradient>
-                <linearGradient id="barHoverGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#a78bfa" stopOpacity={1} /> {/* Violet-400 */}
-                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.8} /> {/* Violet-500 */}
+                  <stop offset="0%" stopColor="#818cf8" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0.6} />
                 </linearGradient>
               </defs>
 
@@ -84,20 +109,31 @@ export const SalesChart: React.FC<SalesChartProps> = ({ data }) => {
                 content={<CustomTooltip />}
               />
               
+              {/* Actual Sales Bars */}
               <Bar 
                 dataKey="sales" 
-                radius={[6, 6, 6, 6]} // Fully rounded top and bottom for "capsule" look
-                barSize={24}          // Slightly wider bars
+                radius={[6, 6, 0, 0]} 
+                barSize={24}
                 fill="url(#barGradient)"
-                activeBar={{ fill: 'url(#barHoverGradient)' }} // Changes color on hover
                 animationDuration={1500}
               />
-            </BarChart>
+
+              {/* AI Prediction Line */}
+              <Line 
+                type="monotone" 
+                dataKey="predicted" 
+                stroke="#10b981" 
+                strokeWidth={3}
+                dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#0f172a' }}
+                activeDot={{ r: 6, strokeWidth: 0 }}
+                strokeDasharray="5 5" // Makes it a dashed line for "future/prediction" feel
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-2">
             <div className="w-6 h-6 border-2 border-slate-600 border-t-indigo-500 rounded-full animate-spin"></div>
-            <span className="text-sm">Loading chart data...</span>
+            <span className="text-sm">Calculating Forecasts...</span>
           </div>
         )}
       </div>

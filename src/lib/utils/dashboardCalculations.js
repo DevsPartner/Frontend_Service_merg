@@ -1,5 +1,5 @@
 // dashboardCalculations.js
-
+import { clientFetch } from '../api-client';
 /**
  * 1. Define TrendDirection here to avoid import errors.
  * This fixes the "TrendDirection is not defined" crash.
@@ -178,4 +178,29 @@ export function calculateTrend(current, previous) {
   if (current > previous) return TrendDirection.UP;
   if (current < previous) return TrendDirection.DOWN;
   return TrendDirection.NEUTRAL;
+}
+
+export async function fetchSalesAndForecastData() {
+  try {
+    // 1. Fetch Actual Sales from Order Service
+    const salesRes = await clientFetch('orders', '/api/analytics/sales-history');
+    const actualSales = await salesRes.json();
+
+    // 2. Fetch AI Forecast for the next period
+    const forecastRes = await clientFetch('forecast', '/api/forecast/predict-all');
+    const forecastData = await forecastRes.json();
+
+    // 3. Merge them into a format Recharts understands
+    return actualSales.map(item => {
+      const prediction = forecastData.find(f => f.date === item.date);
+      return {
+        name: item.month,
+        actual: item.amount,
+        predicted: prediction ? prediction.amount : null, // The AI "guess"
+      };
+    });
+  } catch (error) {
+    console.error("Failed to merge sales and forecast data:", error);
+    return [];
+  }
 }

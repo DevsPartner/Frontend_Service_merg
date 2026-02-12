@@ -27,6 +27,8 @@ export const Sidebar = () => {
         <NavItem href="/dashboard/customers" icon={<Users size={20}/>} label="Customers" active={isActive('/dashboard/customers')} />
         <NavItem href="/dashboard/orders" icon={<ShoppingBag size={20}/>} label="Orders" active={isActive('/dashboard/orders')} />
         <NavItem href="/dashboard/products" icon={<Package size={20}/>} label="Products" active={isActive('/dashboard/products')} />
+        <NavItem  href="/dashboard/ai-engine" icon={<Cpu size={20}/>} label="AI Engine" active={isActive('/dashboard/ai-engine')} 
+/>
       </nav>
 
       <div className="p-4 border-t border-slate-800/50 space-y-1">

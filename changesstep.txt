@@ -1,0 +1,58 @@
+=========================================================
+RETAIL ANALYTICS & MLOPS DASHBOARD - MERGE STEPS
+=========================================================
+
+GOAL: Integrate the premium UI/UX from the 'azar' branch 
+with the functional MLOps/Forecasting engine from '0c76'.
+
+---------------------------------------------------------
+PHASE 1: DEPENDENCIES & CORE STRUCTURE
+---------------------------------------------------------
+1. [x] Update package.json:
+       - Adopt React 19 and Next.js 16/17 foundation.
+       - Include 'recharts' for analytics and 'lucide-react' for icons.
+       - Ensure Tailwind CSS v4 setup is preserved for the high-end UI.
+
+2. [x] Resolve lib/api-client.js Conflicts:
+       - Create a unified backendFetch and clientFetch.
+       - Merge JWT decoding (from azar) with the multi-service 
+         URL configuration (from 0c76).
+       - Add the 'forecast' service to BASE_URLS (Port 8008).
+
+---------------------------------------------------------
+PHASE 2: SECURITY & NAVIGATION
+---------------------------------------------------------
+3. [x] Global Admin Protection:
+       - Wrap src/app/dashboard/layout.js with an isAdmin check.
+       - Redirect non-admin users to the landing page using AuthContext.
+
+4. [x] Sidebar Integration:
+       - Add "AI Engine" navigation item to Sidebar.jsx.
+       - Use the 'Cpu' icon from lucide-react to maintain the theme.
+
+---------------------------------------------------------
+PHASE 3: FEATURE INTEGRATION
+---------------------------------------------------------
+5. [x] Create AI Engine Page:
+       - Path: src/app/dashboard/ai-engine/page.jsx.
+       - Port ForecastWidget, ModelTraining, and HealthStatus.
+       - Restyle components with "Glassmorphism" (bg-slate-900/50).
+
+6. [x] Smart Sales Chart:
+       - Convert SalesChart.tsx to a ComposedChart.
+       - Map 'sales' to Bars (Actual) and 'predicted' to Lines (AI).
+       - Add the "AI Powered" badge and custom tooltips.
+
+---------------------------------------------------------
+PHASE 4: CLEANUP & DEPLOYMENT
+---------------------------------------------------------
+7. [ ] Remove Git Conflict Markers:
+       - Search for "<<<<<<<", "=======", and ">>>>>>>".
+       - Ensure all logic is merged and markers are deleted.
+
+8. [ ] Git Finalization:
+       - git add .
+       - git commit -m "feat: complete merge of Retail UI and MLOps Engine"
+       - git push origin azar
+
+=========================================================

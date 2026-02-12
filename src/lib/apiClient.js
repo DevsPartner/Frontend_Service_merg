@@ -1,29 +1,17 @@
-// lib/api-client.js
-<<<<<<< HEAD
-// Zentrale Stelle für alle Backend-Aufrufe mit JWT und User-ID Handling
+// Zentrale Stelle für alle Backend-Aufrufe (Merged & AI-Ready)
 
 const BASE_URLS = {
   auth: process.env.AUTH_SERVICE_URL || "http://localhost:8000",
   products: process.env.PRODUCT_SERVICE_URL || "http://localhost:8001",
   cart: process.env.CART_SERVICE_URL || "http://localhost:8009",
-=======
-// WARUM: Zentrale Stelle für alle Backend-Aufrufe
-// - Verhindert Code-Duplikation
-// - Einheitliches Error Handling
-// - Einfache Konfigurationsänderungen
-
-const BASE_URLS = {
-  auth: process.env.AUTH_SERVICE_URL || "http://localhost:8004",
-  products: process.env.PRODUCT_SERVICE_URL || "http://localhost:8000",
-  cart: process.env.CART_SERVICE_URL || "http://localhost:8001",
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
   orders: process.env.ORDER_SERVICE_URL || "http://localhost:8003",
+  // Added from 0c76 version for Step 5
+  forecast: process.env.FORECAST_SERVICE_URL || "http://localhost:8008", 
 };
 
 /**
-<<<<<<< HEAD
- * Decode JWT to extract user_id (simple implementation)
- * For production, use a proper JWT library
+ * Decode JWT to extract user_id 
+ * Needed for services like 'Cart' that require X-User-Id header
  */
 function decodeJWT(token) {
   try {
@@ -43,13 +31,7 @@ function decodeJWT(token) {
 }
 
 /**
-=======
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
- * Generische Fetch-Funktion für Backend-Services
- * @param {string} service - Service-Name (auth, products, cart, orders)
- * @param {string} path - API-Pfad
- * @param {RequestInit} options - Fetch-Optionen
- * @param {Request} [request] - Next.js Request für Cookie-Weiterleitung
+ * Server-side fetch (for Middleware or Server Components)
  */
 export async function backendFetch(service, path, options = {}, request = null) {
   const url = `${BASE_URLS[service]}${path}`;
@@ -59,9 +41,9 @@ export async function backendFetch(service, path, options = {}, request = null) 
     ...options.headers,
   };
 
-<<<<<<< HEAD
-  // JWT Cookie vom Client an Backend weiterleiten
   let userId = null;
+
+  // Forward JWT Cookie from Client to Backend
   if (request) {
     const cookieName = process.env.JWT_COOKIE_NAME || "auth_token";
     const token = request.cookies.get(cookieName)?.value;
@@ -69,53 +51,31 @@ export async function backendFetch(service, path, options = {}, request = null) 
     if (token) {
       headers["Cookie"] = `${cookieName}=${token}`;
       
-      // Für Cart-Service: User-ID aus JWT extrahieren
-      if (service === "cart") {
-        const payload = decodeJWT(token);
-        userId = payload?.user_id || payload?.sub || payload?.id;
-      }
+      // Extract User-ID for services that need it
+      const payload = decodeJWT(token);
+      userId = payload?.user_id || payload?.sub || payload?.id;
     }
   }
 
-  // WICHTIG: Cart-Service braucht X-User-Id Header
-  if (service === "cart" && userId) {
+  // Set X-User-Id header if needed (Cart and Order services usually require this)
+  if (userId) {
     headers["X-User-Id"] = String(userId);
   }
 
-  // FALLBACK für Testing: Wenn keine User-ID gefunden, temporär hardcoden
-  // ENTFERNEN in Production!
-  if (service === "cart" && !userId) {
-    console.warn("⚠️ No user_id found, using fallback. Remove in production!");
-    headers["X-User-Id"] = "1"; // Temporär für Tests
-  }
-
-=======
-  // WICHTIG: JWT Cookie vom Client an Backend weiterleiten
-  if (request) {
-    const cookieName = process.env.JWT_COOKIE_NAME || "auth_token";
-    const token = request.cookies.get(cookieName)?.value;
-    if (token) {
-      headers["Cookie"] = `${cookieName}=${token}`;
-    }
-  }
-
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
   try {
     const res = await fetch(url, {
       ...options,
       headers,
     });
-
     return res;
   } catch (err) {
     console.error(`Backend fetch failed (${service}):`, err);
     throw err;
   }
-<<<<<<< HEAD
 }
 
 /**
- * Client-side fetch (für use client Komponenten)
+ * Client-side fetch (for 'use client' components)
  */
 export async function clientFetch(service, path, options = {}) {
   const url = `${BASE_URLS[service]}${path}`;
@@ -127,7 +87,7 @@ export async function clientFetch(service, path, options = {}) {
         "Content-Type": "application/json",
         ...options.headers,
       },
-      credentials: "include", // Wichtig für Cookies
+      credentials: "include", // Required for passing cookies to microservices
     });
     
     return res;
@@ -135,6 +95,4 @@ export async function clientFetch(service, path, options = {}) {
     console.error(`Client fetch failed (${service}):`, err);
     throw err;
   }
-=======
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
 }
