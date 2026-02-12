@@ -2,10 +2,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from '@/context/AuthContext';
 import Recommendations from "@/components/recommendations/Recommendations";
 import { Loader2, ShoppingCart, Star, Sparkles } from "lucide-react";
-
+import { cartApi } from "@/lib/cartApi";
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,41 +21,71 @@ export default function ProductsPage() {
   }, []);
 
   const fetchProducts = async () => {
-    try {
-      const res = await fetch("/products?skip=0&limit=100");
-      const data = await res.json();
+  try {
+    setLoading(true);
+   
+    const res = await fetch("http://localhost:8001/products?skip=0&limit=100");
+    const data = await res.json();
 
-      if (data && Array.isArray(data)) {
-        setProducts(data);
-      } else if (data && Array.isArray(data.products)) {
-        setProducts(data.products);
-      } else {
-        console.error("API did not return an array:", data);
-        setProducts([]);
-      }
-    } catch (err) {
-      setError("Failed to fetch products");
-      setProducts([]);
-    } finally {
-      setLoading(false);
+    // The API returned {} (an empty object), so we must check for arrays
+    if (data && Array.isArray(data)) {
+      setProducts(data);
+    } else if (data && Array.isArray(data.products)) {
+      setProducts(data.products);
+    } else {
+      // This is what is currently happening; we force an empty array to stop the .map crash
+      console.warn("API returned non-array data:", data);
+      setProducts([]); 
     }
-  };
+  } catch (err) {
+    console.error("Fetch error:", err);
+    setProducts([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleAddToCart = async (product) => {
-    if (!user) {
-      router.push("/login");
-      return;
+  setAddingToCart(product.id);
+  
+  try {
+    if (user) {
+      // PATH A: Logged in - Send to Backend
+      await cartApi.addToCart(user.id, user.name, {
+        product_id: product.id,
+        product_name: product.name,
+        product_price: product.price,
+        image_link: product.imageLink || 'https://placehold.co/800x800/e5e7eb/6b7280?text=No+Image',
+        quantity: 1,
+      });
+    } else {
+      // PATH B: Guest - Save to Local Storage
+      const localCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+      const existingItem = localCart.find(item => item.product_id === product.id);
+
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        localCart.push({
+          product_id: product.id,
+          product_name: product.name,
+          product_price: product.price,
+          image_link: product.imageLink,
+          quantity: 1
+        });
+      }
+      localStorage.setItem('guest_cart', JSON.stringify(localCart));
     }
 
-    setAddingToCart(product.id);
-    try {
-      await addToCart(product);
-    } catch (err) {
-      console.error("Cart error:", err);
-    } finally {
-      setAddingToCart(null);
-    }
-  };
+    alert("Produkt wurde zum Warenkorb hinzugefügt!");
+    
+  } catch (err) {
+    console.error('Add to cart error:', err);
+    alert('Fehler: ' + err.message);
+  } finally {
+    setAddingToCart(null);
+  }
+};
 
   if (loading) {
     return (

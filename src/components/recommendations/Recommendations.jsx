@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/components/Navbar/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
 export default function Recommendations() {

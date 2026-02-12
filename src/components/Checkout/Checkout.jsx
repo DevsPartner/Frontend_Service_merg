@@ -2,171 +2,116 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
-export default function CheckoutPage() {
-<<<<<<< HEAD
-  const [name, setName] = useState("");
+export default function Checkout() {
+  const { cart, clearCart } = useCart();
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const [email, setEmail] = useState(user?.email || "");
   const [address, setAddress] = useState("");
-  const [email, setEmail] = useState(""); // Add missing email state
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false); // Add loading state for better UX
-  const router = useRouter();
-
-=======
-  const [name, setName] = useState(""); // Single name field
-  const [username, setUsername] = useState(""); // Optional
-  const [cartId, setCartId] = useState(123); // You need to get real cartId
-  const [totalAmount, setTotalAmount] = useState("0.00"); // You need to calculate this
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [error, setError] = useState(null);
 
-  // You need to get these from your cart/context
-  const getCartItems = () => {
-    // Replace with actual cart items from your state/context
-    return [
-      {
-        product_Id: 1,
-        productName: "Test Product",
-        price: "29.99",
-        quantity: 1
-      }
-    ];
-  };
+  const totalAmount = cart?.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0;
 
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     try {
-<<<<<<< HEAD
-      const res = await fetch("http://localhost:8003/orders", {
+      const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          name, 
-          address, 
-          email 
-          // Add cart data here if needed
+        body: JSON.stringify({
+          user_id: user?.id,
+          items: cart,
+          total_amount: totalAmount,
+          shipping_address: address,
         }),
       });
-      
-      if (!res.ok) throw new Error("Bestellung fehlgeschlagen");
-      
-      // Clear form and redirect on success
-      setName("");
-      setAddress("");
-      setEmail("");
-      router.push("/order-success");
-    } catch (err) {
-=======
-      const orderData = {
-        cartId: cartId, // Get from your cart
-        totalAmount: totalAmount, // Calculate from cart
-        name: name, // Single name field
-        username: username || "customer", // Default if empty
-        gender: null, // Optional
-        // Remove address and email fields
-        items: getCartItems(), // Get from cart
-        orderDate: new Date().toISOString()
-      };
-      
-      console.log("Sending order:", orderData); // Debug log
-      
-      const res = await fetch("http://localhost:8003/orders/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      });
-      
-      const responseData = await res.json(); // Get response body
-      console.log("Response:", responseData); // Debug log
-      
-      if (!res.ok) {
-        throw new Error(responseData.detail || "Bestellung fehlgeschlagen");
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.error || "Bestellung fehlgeschlagen");
       }
-      
-      // Clear form and redirect on success
-      setName("");
-      setUsername("");
+
+      // Clear local cart and redirect to payment
+      clearCart();
       router.push(`/payment?order_id=${responseData.orderId}&total=${totalAmount}`);
     } catch (err) {
       console.error("Order error:", err);
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
       setError(err.message || "Fehler bei Bestellung");
     } finally {
       setLoading(false);
     }
   };
 
+  if (!cart || cart.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0f172a]">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4 dark:text-white">Dein Warenkorb ist leer</h2>
+          <button onClick={() => router.push("/products")} className="text-blue-600 hover:underline">
+            Zurück zu den Produkten
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12">
-      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Checkout</h1>
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
-          <div className="space-y-4">
-            <input 
-              type="text" 
-              placeholder="Name" 
-              required
-              className="w-full border rounded-lg p-3 bg-transparent text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              value={name} 
-              onChange={e => setName(e.target.value)} 
-            />
-            <input 
-              type="text" 
-<<<<<<< HEAD
-              placeholder="Adresse" 
-              required
-              className="w-full border rounded-lg p-3 bg-transparent text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              value={address} 
-              onChange={e => setAddress(e.target.value)} 
-            />
-            <input 
-              type="email" 
-              placeholder="E-Mail" 
-              required
-              className="w-full border rounded-lg p-3 bg-transparent text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-            />
-=======
-              placeholder="Benutzername (optional)" 
-              className="w-full border rounded-lg p-3 bg-transparent text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              value={username} 
-              onChange={e => setUsername(e.target.value)} 
-            />
-            {/* Removed address and email fields */}
->>>>>>> 0c7699ac5d95bfd72131d9d871243d5964dd418c
-          </div>
-          
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0f172a] py-12">
+      <div className="max-w-3xl mx-auto px-4">
+        <h1 className="text-3xl font-black mb-8 dark:text-white">Checkout</h1>
+        
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+            <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">
+              {error}
             </div>
           )}
-          
-          <button 
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold transition ${loading 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-          >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Wird verarbeitet...
-              </span>
-            ) : (
-              "Bestellung absenden"
-            )}
-          </button>
+
+          <div>
+            <label className="block text-sm font-bold mb-2 dark:text-gray-300">Email</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-2 dark:text-gray-300">Lieferadresse</label>
+            <textarea
+              required
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full p-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+              rows="3"
+            />
+          </div>
+
+          <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex justify-between items-center mb-6">
+              <span className="text-lg font-bold dark:text-white">Gesamtbetrag</span>
+              <span className="text-2xl font-black text-blue-600">{totalAmount.toFixed(2)} €</span>
+            </div>
+            
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50"
+            >
+              {loading ? "Wird verarbeitet..." : "Kostenpflichtig bestellen"}
+            </button>
+          </div>
         </form>
       </div>
     </div>

@@ -1,5 +1,5 @@
 // src/lib/cartApi.js
-const CART_API_URL = process.env.NEXT_PUBLIC_CART_API_URL || 'http://localhost:8001/api/v1';
+const CART_API_URL = process.env.NEXT_PUBLIC_CART_API_URL || 'http://localhost:8009/api/v1';
 
 export const cartApi = {
   addToCart: async (userId, username, itemData) => {

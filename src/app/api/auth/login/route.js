@@ -1,38 +1,32 @@
-// src/lib/auth.js (Updated to match your FastAPI Backend)
+// src/app/api/auth/login/route.js
+import { NextResponse } from 'next/server';
 
-export const authApi = {
-  login: async (email, password) => {
-    const response = await fetch('http://localhost:8000/auth/login', { // Note the path /auth/login
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    
+    // Forward the request to your FastAPI backend
+    const response = await fetch('http://localhost:8000/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(body),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Login failed');
-    }
-
     const data = await response.json();
-    
-    // Since your backend only returns email, we create a user object
-    // We also check if the email contains 'admin' to set the flag locally
-    const user = {
-      email: data.email,
-      isAdmin: data.email.toLowerCase().includes('admin') || data.email === '1'
-    };
-    
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    return { user };
-  },
 
-  // Add the logout to clear the cookie and local storage
-  logout: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('user');
-      // To clear the HttpOnly cookie, you usually need a backend /logout route
-      // but we clear the UI state here immediately.
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data.detail || 'Login failed' }, 
+        { status: response.status }
+      );
     }
+
+    // Success response
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal Server Error' }, 
+      { status: 500 }
+    );
   }
-};
+}
