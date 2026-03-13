@@ -7,4 +7,3 @@ module.exports = {
   ],
   theme: { extend: {} }
 };
-
