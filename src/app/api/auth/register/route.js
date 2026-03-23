@@ -6,7 +6,7 @@ const LOGIN_SERVICE_URL = process.env.LOGIN_SERVICE_URL || 'http://localhost:800
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { email, password, name, birthday, address } = body;
+    const { email, password, name, birthday, gender, address } = body;
 
     // Validate required fields
     if (!email || !password || !name) {
@@ -16,7 +16,7 @@ export async function POST(request) {
       );
     }
 
-    // Call your login service
+    // Call login service
     const response = await fetch(`${LOGIN_SERVICE_URL}/api/auth/register`, {
       method: 'POST',
       headers: {
@@ -26,7 +26,8 @@ export async function POST(request) {
         email,
         password,
         name,
-        birthday,
+        birthday: birthday || undefined,
+        gender: gender || undefined,
         address,
       }),
     });
@@ -40,7 +41,6 @@ export async function POST(request) {
       );
     }
 
-    // Success
     return NextResponse.json({
       success: true,
       message: 'Registration successful',

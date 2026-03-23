@@ -15,7 +15,6 @@ export const Sidebar = () => {
   };
 
   return (
-    // Sidebar matches the #0B1120 background from your layout
     <aside className="flex w-64 bg-[#0B1120] border-r border-slate-800/50 flex-col h-screen">
       
       <div className="p-8">
@@ -24,12 +23,11 @@ export const Sidebar = () => {
 
       <nav className="flex-1 px-4 space-y-1">
         <NavItem href="/dashboard" icon={<LayoutDashboard size={20}/>} label="Overview" active={isActive('/dashboard')} />
-        <NavItem href="/dashboard/analytics" icon={<PieChart size={20}/>} label="Analytics" active={isActive('/dashboard/analytics')} />
+        <NavItem href="/dashboard/customers" icon={<PieChart size={20}/>} label="Analytics" active={isActive('/dashboard/customers')} />
         <NavItem href="/dashboard/customers" icon={<Users size={20}/>} label="Customers" active={isActive('/dashboard/customers')} />
         <NavItem href="/dashboard/orders" icon={<ShoppingBag size={20}/>} label="Orders" active={isActive('/dashboard/orders')} />
         <NavItem href="/dashboard/products" icon={<Package size={20}/>} label="Products" active={isActive('/dashboard/products')} />
-        <NavItem  href="/dashboard/ai-engine" icon={<Cpu size={20}/>} label="AI Engine" active={isActive('/dashboard/ai-engine')} 
-/>
+        <NavItem href="/dashboard/ai-engine" icon={<Cpu size={20}/>} label="AI Engine" active={isActive('/dashboard/ai-engine')} />
       </nav>
 
       <div className="p-4 border-t border-slate-800/50 space-y-1">
@@ -46,7 +44,6 @@ export const Sidebar = () => {
   );
 };
 
-// Helper component
 const NavItem = ({ href, icon, label, active }) => (
   <Link href={href} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${active}`}>
     {icon}

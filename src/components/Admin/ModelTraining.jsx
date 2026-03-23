@@ -1,13 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { forecastClient } from '@/lib/forecast-client';
 
-export default function ModelTraining({ products }) {
+export default function ModelTraining({ products: productsProp }) {
+  const [products, setProducts] = useState(productsProp || []);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [training, setTraining] = useState(false);
   const [result, setResult] = useState(null);
   const [forceRetrain, setForceRetrain] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(!productsProp);
+
+  // If no products prop was passed, fetch them ourselves
+  useEffect(() => {
+    if (!productsProp) {
+      fetch('/api/products')
+        .then((res) => res.json())
+        .then((data) => setProducts(Array.isArray(data) ? data : []))
+        .catch(() => setProducts([]))
+        .finally(() => setLoadingProducts(false));
+    }
+  }, [productsProp]);
 
   const toggleProduct = (productId) => {
     setSelectedProducts(prev =>
@@ -27,14 +40,29 @@ export default function ModelTraining({ products }) {
 
   const trainModels = async () => {
     if (selectedProducts.length === 0) return;
-    
     setTraining(true);
     setResult(null);
-    
     const response = await forecastClient.trainModels(selectedProducts, forceRetrain);
     setResult(response);
     setTraining(false);
   };
+
+  if (loadingProducts) {
+    return (
+      <div className="flex items-center gap-3 py-8 text-slate-400">
+        <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm font-medium">Loading products...</span>
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="py-8 text-center text-slate-500 text-sm font-medium">
+        No products available for training.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

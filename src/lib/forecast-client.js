@@ -1,9 +1,9 @@
-const FORECASTING_SERVICE_URL = process.env.FORECASTING_SERVICE_URL || 'http://localhost:8008';
+// src/lib/forecast-client.js
 
 class ForecastClient {
   async healthCheck() {
     try {
-      const response = await fetch(`${FORECASTING_SERVICE_URL}/health`);
+      const response = await fetch('http://localhost:8008/health');
       return await response.json();
     } catch (error) {
       return { status: 'unhealthy', error: error.message };
@@ -12,10 +12,10 @@ class ForecastClient {
 
   async getForecast(options) {
     try {
-      const response = await fetch(`${FORECASTING_SERVICE_URL}/forecast`, {
+      const response = await fetch('/api/forecast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(options)
+        body: JSON.stringify(options),
       });
       return await response.json();
     } catch (error) {
@@ -25,13 +25,13 @@ class ForecastClient {
 
   async trainModels(productIds = [], forceRetrain = false) {
     try {
-      const response = await fetch(`${FORECASTING_SERVICE_URL}/train`, {
+      const response = await fetch('/api/forecast/train', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           product_ids: productIds,
-          force_retrain
-        })
+          force_retrain: forceRetrain,
+        }),
       });
       return await response.json();
     } catch (error) {
@@ -41,7 +41,7 @@ class ForecastClient {
 
   async getModelInfo(productId) {
     try {
-      const response = await fetch(`${FORECASTING_SERVICE_URL}/models/${productId}`);
+      const response = await fetch(`http://localhost:8008/models/${productId}`);
       return await response.json();
     } catch (error) {
       return { error: error.message };
@@ -50,8 +50,8 @@ class ForecastClient {
 
   async updateDataset() {
     try {
-      const response = await fetch(`${FORECASTING_SERVICE_URL}/data/update`, {
-        method: 'POST'
+      const response = await fetch('http://localhost:8008/data/update', {
+        method: 'POST',
       });
       return await response.json();
     } catch (error) {
@@ -61,8 +61,7 @@ class ForecastClient {
 
   async getAvailableProducts() {
     try {
-      // UPDATE THIS LINE ONLY: Change from environment variable to direct port 18002
-      const response = await fetch('http://localhost:8000/products');
+      const response = await fetch('/api/products');
       return await response.json();
     } catch (error) {
       console.error('Error fetching products:', error);

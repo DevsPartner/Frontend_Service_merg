@@ -4,27 +4,25 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/Navbar/AuthContext';
 import ForecastWidget from '@/components/Admin/ForecastWidget';
-import ModelTraining from '@/components/Admin/ModelTraining';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [trainMsg, setTrainMsg] = useState(null);
+  const [trainMsgType, setTrainMsgType] = useState('success');
 
   useEffect(() => {
-    if (user?.isAdmin) {
-      loadProducts();
-    }
+    if (user?.isAdmin) loadProducts();
   }, [user]);
 
   const loadProducts = async () => {
     try {
-      const response = await fetch('http://localhost:8000/products');
-      const productsData = await response.json();
-      setProducts(productsData);
-    } catch (error) {
-      console.error('Failed to load products:', error);
+      const response = await fetch('/api/products');
+      const data = await response.json();
+      setProducts(Array.isArray(data) ? data : []);
+    } catch {
       setProducts([]);
     }
   };
@@ -32,9 +30,7 @@ export default function AdminDashboard() {
   const handleUpdateData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8008/data/update', {
-        method: 'POST',
-      });
+      const response = await fetch('http://localhost:8008/data/update', { method: 'POST' });
       const result = await response.json();
       alert(result.message || 'Dataset updated successfully');
     } catch (error) {
@@ -43,23 +39,23 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  const handleTrainModel = async (productIds = [101, 102, 103]) => {
+  const handleTrainAllModels = async () => {
     setLoading(true);
+    setTrainMsg(null);
     try {
-      const response = await fetch('http://localhost:8008/train', {
+      const productIds = products.map(p => p.id);
+      const response = await fetch('/api/forecast/train', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          product_ids: productIds,
-          force_retrain: true,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_ids: productIds, force_retrain: true }),
       });
       const result = await response.json();
-      alert(result.message || 'Training started successfully');
+      if (result.error) throw new Error(result.error);
+      setTrainMsgType('success');
+      setTrainMsg(result.message || 'Training started for all products');
     } catch (error) {
-      alert('Error training model: ' + error.message);
+      setTrainMsgType('error');
+      setTrainMsg('Error: ' + error.message);
     }
     setLoading(false);
   };
@@ -68,11 +64,6 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center p-8 bg-white rounded-2xl shadow-lg max-w-md">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
           <p className="text-gray-600 mb-6">You don't have permission to access the admin dashboard.</p>
           <Link href="/" className="inline-block px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition">
@@ -92,7 +83,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      {/* Header */}
       <div className="bg-white shadow">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -100,47 +90,28 @@ export default function AdminDashboard() {
               <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
               <p className="text-gray-600">MLOps Forecasting System Management</p>
             </div>
-            <div className="flex items-center gap-3">
-              <a
-                href="http://localhost:8008/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
-                API Docs
-              </a>
-            </div>
+            <a href="http://localhost:8008/docs" target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition">
+              API Docs
+            </a>
           </div>
-
-          {/* Tabs */}
           <div className="mt-6 flex space-x-1 overflow-x-auto">
             {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 font-medium rounded-lg transition-all whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.name}
+                  activeTab === tab.id ? 'bg-blue-600 text-white shadow' : 'text-gray-700 hover:bg-gray-100'
+                }`}>
+                <span className="mr-2">{tab.icon}</span>{tab.name}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Tab Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-8">
+
             {activeTab === 'overview' && (
               <>
                 <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -160,7 +131,6 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-
                 <div className="bg-white rounded-2xl shadow-lg p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Predictions</h3>
                   <ForecastWidget productId={products[0]?.id} period="week" />
@@ -170,15 +140,67 @@ export default function AdminDashboard() {
 
             {activeTab === 'forecast' && (
               <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Generate Forecast</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Generate Sales Forecast</h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  Select a product and period to forecast its future sales quantity.
+                  Train models first if you haven't already.
+                </p>
                 <ForecastWidget products={products} />
               </div>
             )}
 
             {activeTab === 'models' && (
               <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Model Management</h3>
-                <ModelTraining products={products} />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Model Training</h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  Train forecasting models on the full dataset combining orders, payments, products and customers.
+                  Training runs in the background — check MLflow for experiment results.
+                </p>
+
+                {trainMsg && (
+                  <div className={`mb-6 p-4 rounded-xl text-sm font-medium ${
+                    trainMsgType === 'success'
+                      ? 'bg-green-50 text-green-700 border border-green-200'
+                      : 'bg-red-50 text-red-700 border border-red-200'
+                  }`}>
+                    {trainMsg}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <div className="font-medium text-gray-900 mb-1">Training Dataset</div>
+                    <div className="text-sm text-gray-500">
+                      Orders + Payments + Products + Customers — {products.length} products loaded
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleTrainAllModels}
+                    disabled={loading || products.length === 0}
+                    className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                        Training in progress...
+                      </>
+                    ) : (
+                      `🤖 Train Models on Full Dataset (${products.length} products)`
+                    )}
+                  </button>
+
+                  <div className="flex gap-3">
+                    <a href="http://localhost:5000" target="_blank" rel="noopener noreferrer"
+                      className="flex-1 text-center px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium rounded-xl transition">
+                      📊 MLflow Tracking
+                    </a>
+                    <a href="http://localhost:8008/docs" target="_blank" rel="noopener noreferrer"
+                      className="flex-1 text-center px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-xl transition">
+                      📖 Forecast API
+                    </a>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -187,59 +209,32 @@ export default function AdminDashboard() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Data Management</h3>
                 <div className="space-y-6">
                   <div className="flex flex-col gap-3">
-                    <button 
-                      onClick={handleUpdateData}
-                      disabled={loading}
-                      className="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition disabled:opacity-50"
-                    >
-                      {loading ? 'Updating...' : 'Update Dataset Now'}
+                    <button onClick={handleUpdateData} disabled={loading}
+                      className="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition disabled:opacity-50">
+                      {loading ? 'Updating...' : 'Update Dataset from Services'}
                     </button>
                     <p className="text-sm text-gray-500">
-                      Fetch latest data from all services
+                      Fetches latest orders, payments and products data and saves as training dataset.
                     </p>
                   </div>
-                  
                   <div>
                     <h4 className="font-medium text-gray-900 mb-4">View Data Sources</h4>
                     <div className="space-y-3">
-                      <a
-                        href="http://localhost:8000/products"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center gap-3"
-                      >
-                        <span className="text-blue-600">🛍️</span>
-                        <div>
-                          <div className="font-medium">Product Service</div>
-                          <div className="text-sm text-gray-500">View all products</div>
-                        </div>
-                      </a>
-                      
-                      <a
-                        href="http://localhost:8003/orders"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg transition flex items-center gap-3"
-                      >
-                        <span className="text-green-600">📦</span>
-                        <div>
-                          <div className="font-medium">Order Service</div>
-                          <div className="text-sm text-gray-500">View all orders</div>
-                        </div>
-                      </a>
-                      
-                      <a
-                        href="http://localhost:8002/payments"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition flex items-center gap-3"
-                      >
-                        <span className="text-purple-600">💳</span>
-                        <div>
-                          <div className="font-medium">Payment Service</div>
-                          <div className="text-sm text-gray-500">View all payments</div>
-                        </div>
-                      </a>
+                      {[
+                        { href: 'http://localhost:8000/products/', icon: '🛍️', label: 'Product Service', desc: 'View all products', color: 'blue' },
+                        { href: 'http://localhost:8003/orders/', icon: '📦', label: 'Order Service', desc: 'View all orders', color: 'green' },
+                        { href: 'http://localhost:8002/payments/', icon: '💳', label: 'Payment Service', desc: 'View all payments', color: 'purple' },
+                        { href: 'http://localhost:8004/docs', icon: '👤', label: 'Login Service', desc: 'View customers', color: 'orange' },
+                      ].map(({ href, icon, label, desc, color }) => (
+                        <a key={href} href={href} target="_blank" rel="noopener noreferrer"
+                          className={`block px-4 py-3 bg-${color}-50 hover:bg-${color}-100 rounded-lg transition flex items-center gap-3`}>
+                          <span>{icon}</span>
+                          <div>
+                            <div className="font-medium">{label}</div>
+                            <div className="text-sm text-gray-500">{desc}</div>
+                          </div>
+                        </a>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -247,9 +242,8 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* Right Column - Sidebar */}
+          {/* Sidebar */}
           <div className="space-y-8">
-            {/* Quick Stats */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
               <div className="space-y-4">
@@ -267,78 +261,31 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Quick Actions - Now includes all monitoring links */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <button 
-                  onClick={() => setActiveTab('models')}
-                  className="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 rounded-lg transition flex items-center gap-3"
-                >
-                  <span className="text-blue-600">🤖</span>
-                  <div>
-                    <div className="font-medium">Train New Models</div>
-                    <div className="text-sm text-gray-500">Update AI predictions</div>
-                  </div>
-                </button>
-                <button 
-                  onClick={() => setActiveTab('data')}
-                  className="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 rounded-lg transition flex items-center gap-3"
-                >
-                  <span className="text-purple-600">📈</span>
-                  <div>
-                    <div className="font-medium">Update Data</div>
-                    <div className="text-sm text-gray-500">Fetch latest sales</div>
-                  </div>
-                </button>
-                <a
-                  href="http://localhost:8008/docs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-left px-4 py-3 bg-white hover:bg-gray-50 rounded-lg transition flex items-center gap-3"
-                >
-                  <span className="text-gray-600">📖</span>
-                  <div>
-                    <div className="font-medium">API Documentation</div>
-                    <div className="text-sm text-gray-500">Forecast API Docs</div>
-                  </div>
-                </a>
-                <a
-                  href="http://localhost:5000"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-left px-4 py-3 bg-white hover:bg-gray-50 rounded-lg transition flex items-center gap-3"
-                >
-                  <span className="text-purple-600">📊</span>
-                  <div>
-                    <div className="font-medium">MLflow Tracking</div>
-                    <div className="text-sm text-gray-500">Model experiments</div>
-                  </div>
-                </a>
-                <a
-                  href="http://localhost:9090"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-left px-4 py-3 bg-white hover:bg-gray-50 rounded-lg transition flex items-center gap-3"
-                >
-                  <span className="text-red-600">📊</span>
-                  <div>
-                    <div className="font-medium">View Metrics</div>
-                    <div className="text-sm text-gray-500">Prometheus dashboard</div>
-                  </div>
-                </a>
-                <a
-                  href="http://localhost:13000"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-left px-4 py-3 bg-white hover:bg-gray-50 rounded-lg transition flex items-center gap-3"
-                >
-                  <span className="text-green-600">📈</span>
-                  <div>
-                    <div className="font-medium">Analytics Dashboard</div>
-                    <div className="text-sm text-gray-500">Grafana</div>
-                  </div>
-                </a>
+                {[
+                  { tab: 'models', icon: '🤖', label: 'Train Models', desc: 'Update AI predictions' },
+                  { tab: 'forecast', icon: '🔮', label: 'Generate Forecast', desc: 'Predict product sales' },
+                  { tab: 'data', icon: '📈', label: 'Update Data', desc: 'Fetch latest sales' },
+                ].map(({ tab, icon, label, desc }) => (
+                  <button key={tab} onClick={() => setActiveTab(tab)}
+                    className="w-full text-left px-4 py-3 bg-white hover:bg-gray-50 rounded-lg transition flex items-center gap-3">
+                    <span>{icon}</span>
+                    <div><div className="font-medium">{label}</div><div className="text-sm text-gray-500">{desc}</div></div>
+                  </button>
+                ))}
+                {[
+                  { href: 'http://localhost:5000', icon: '📊', label: 'MLflow Tracking', desc: 'Model experiments' },
+                  { href: 'http://localhost:9090', icon: '📊', label: 'Prometheus', desc: 'View metrics' },
+                  { href: 'http://localhost:13000', icon: '📈', label: 'Grafana', desc: 'Analytics dashboard' },
+                ].map(({ href, icon, label, desc }) => (
+                  <a key={href} href={href} target="_blank" rel="noopener noreferrer"
+                    className="block px-4 py-3 bg-white hover:bg-gray-50 rounded-lg transition flex items-center gap-3">
+                    <span>{icon}</span>
+                    <div><div className="font-medium">{label}</div><div className="text-sm text-gray-500">{desc}</div></div>
+                  </a>
+                ))}
               </div>
             </div>
           </div>

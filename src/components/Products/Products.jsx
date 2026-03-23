@@ -49,7 +49,7 @@ export default function ProductsPage() {
     setAddingToCart(product.id);
     
     try {
-      await cartApi.addToCart(user.id, user.name, {
+      await cartApi.addToCart(user.customer_id, user.name, {
         product_id: product.id,
         product_name: product.name,
         product_price: product.price,
@@ -224,7 +224,7 @@ export default function ProductsPage() {
                 </button>
                 
                 <button
-                  onClick={() => window.open(`http://localhost:8006/simulate/${user.id}`, '_blank')}
+                  onClick={() => window.open(`http://localhost:8006/simulate/${user.customer_id}`, '_blank')}
                   className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

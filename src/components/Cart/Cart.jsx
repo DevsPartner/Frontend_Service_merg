@@ -27,7 +27,7 @@ export default function Cart() {
     setError(null);
     
     try {
-      const data = await cartApi.getCart(user.id);
+      const data = await cartApi.getCart(user.customer_id);
       setCart(data);
     } catch (err) {
       console.error("Failed to fetch cart:", err);
@@ -41,7 +41,7 @@ export default function Cart() {
     if (newQuantity < 1) return;
     
     try {
-      await cartApi.updateQuantity(user.id, productId, newQuantity);
+      await cartApi.updateQuantity(user.customer_id, productId, newQuantity);
       await fetchCart();
     } catch (err) {
       alert('Failed to update quantity');
@@ -50,7 +50,7 @@ export default function Cart() {
 
   const handleRemoveItem = async (productId) => {
     try {
-      await cartApi.removeItem(user.id, productId);
+      await cartApi.removeItem(user.customer_id, productId);
       await fetchCart();
     } catch (err) {
       alert('Failed to remove item');

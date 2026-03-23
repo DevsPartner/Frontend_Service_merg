@@ -12,7 +12,6 @@ export default function OrdersPage() {
     try {
       setLoading(true);
       const data = await OrderService.getRecentOrders();
-      // Ensure we handle different possible API response structures
       setOrders(Array.isArray(data) ? data : data.orders || []);
     } catch (error) {
       console.error("Dashboard Error:", error);
@@ -36,7 +35,7 @@ export default function OrdersPage() {
 
   return (
     <div className="p-6 space-y-6 animate-in fade-in duration-500">
-      {/* Expert Header Section */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white tracking-tight">Order Intelligence</h1>
@@ -55,7 +54,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {/* Main Intelligent Table Card */}
+      {/* Table Card */}
       <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
         <div className="p-4 border-b border-slate-800 bg-slate-900/50 flex flex-col md:flex-row gap-4 justify-between">
           <div className="relative w-full max-w-md">
@@ -94,9 +93,11 @@ export default function OrdersPage() {
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={6} className="py-20 text-center text-slate-500 font-bold">No transactions found.</td></tr>
-              ) : orders.map((order) => (
-                <tr key={order.id || order._id} className="border-b border-slate-800/50 hover:bg-indigo-500/5 transition-all group">
+                <tr>
+                  <td colSpan={6} className="py-20 text-center text-slate-500 font-bold">No transactions found.</td>
+                </tr>
+              ) : orders.map((order, index) => (
+                <tr key={order.id || order._id || index} className="border-b border-slate-800/50 hover:bg-indigo-500/5 transition-all group">
                   <td className="py-5 px-8 font-mono text-xs font-bold text-indigo-400">
                     #{order.id?.toString().slice(-8).toUpperCase()}
                   </td>

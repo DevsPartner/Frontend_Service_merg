@@ -63,7 +63,7 @@ export default function HealthStatus() {
         </div>
       </div>
 
-      {/* Service URLs - FIXED PORTS */}
+      {/* Service URLs */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="border border-gray-200 rounded-lg p-3">
           <div className="text-xs text-gray-500 mb-1">Forecasting API</div>
@@ -79,7 +79,7 @@ export default function HealthStatus() {
         <div className="border border-gray-200 rounded-lg p-3">
           <div className="text-xs text-gray-500 mb-1">MLflow</div>
           <a 
-            href="http://localhost:5000"  {/* FIXED: 5000 not 15000 */}
+            href="http://localhost:5000"
             target="_blank" 
             rel="noopener noreferrer"
             className="text-purple-600 hover:text-purple-800 text-sm font-medium"
@@ -90,7 +90,7 @@ export default function HealthStatus() {
         <div className="border border-gray-200 rounded-lg p-3">
           <div className="text-xs text-gray-500 mb-1">Prometheus</div>
           <a 
-            href="http://localhost:9090"  {/* FIXED: 9090 not 19090 */}
+            href="http://localhost:9090"
             target="_blank" 
             rel="noopener noreferrer"
             className="text-red-600 hover:text-red-800 text-sm font-medium"

@@ -7,7 +7,7 @@ export const cartApi = {
     console.log('CART - itemData:', itemData);
     console.log('CART - URL:', `${CART_API_URL}/cart/${userId}/items?username=${encodeURIComponent(username)}`);
 
-    const response = await fetch(`${CART_API_URL}/cart/${userId}/items?username=${encodeURIComponent(username)}`, {
+    const response = await fetch(`${CART_API_URL}/cart/${userId}/items`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(itemData),

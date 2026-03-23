@@ -11,6 +11,7 @@ export default function RegisterPage() {
     confirmPassword: "",
     name: "",
     birthday: "",
+    gender: "",
     street: "",
     city: "",
     postalCode: "",
@@ -34,7 +35,6 @@ export default function RegisterPage() {
     setError(null);
     setLoading(true);
 
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwörter stimmen nicht überein");
       setLoading(false);
@@ -61,7 +61,8 @@ export default function RegisterPage() {
           email: formData.email,
           password: formData.password,
           name: formData.name,
-          birthday: formData.birthday,
+          birthday: formData.birthday || undefined,
+          gender: formData.gender || undefined,
           address: {
             street: formData.street,
             city: formData.city,
@@ -77,7 +78,6 @@ export default function RegisterPage() {
         throw new Error(data.error || "Registrierung fehlgeschlagen");
       }
 
-      // Success - redirect to login
       router.push("/login?registered=true");
 
     } catch (err) {
@@ -201,19 +201,40 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                <div className="field">
-                  <label htmlFor="birthday" className="text-title text-sm font-medium mb-2 block">
-                    Geburtsdatum
-                  </label>
-                  <input 
-                    id="birthday"
-                    name="birthday"
-                    type="date"
-                    className="input sz-md variant-mixed w-full" 
-                    value={formData.birthday}
-                    onChange={handleChange}
-                    disabled={loading}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="field">
+                    <label htmlFor="birthday" className="text-title text-sm font-medium mb-2 block">
+                      Geburtsdatum
+                    </label>
+                    <input 
+                      id="birthday"
+                      name="birthday"
+                      type="date"
+                      className="input sz-md variant-mixed w-full" 
+                      value={formData.birthday}
+                      onChange={handleChange}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="gender" className="text-title text-sm font-medium mb-2 block">
+                      Geschlecht
+                    </label>
+                    <select
+                      id="gender"
+                      name="gender"
+                      className="input sz-md variant-mixed w-full"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      disabled={loading}
+                    >
+                      <option value="">Bitte wählen</option>
+                      <option value="male">Männlich</option>
+                      <option value="female">Weiblich</option>
+                      <option value="other">Divers</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
