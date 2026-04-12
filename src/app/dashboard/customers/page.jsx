@@ -1,301 +1,209 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Search, Filter, Mail, Plus, Edit2, Trash2, Save } from 'lucide-react';
-// 1. Import the new service
+import { Search, Mail, FileText, Ban, CheckCircle, ChevronDown } from 'lucide-react';
 import { CustomerService } from '@/lib/CustomerService';
-import { Modal } from '@/components/Modal/Modal';
-import { totalSpend,totalOrder } from '@/lib/utils/dashboardCalculations';
-
-
- 
 
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [order,setOrder]= useState([]);
-  const [spend,setSpend]= useState([]);
+  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState({ gender: '', status: '', birthday: '', note: '' });
+  const [noteModal, setNoteModal] = useState(null);
+  const [noteText, setNoteText] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  
+  useEffect(() => { fetchData(); }, []);
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState(null);
-
-  const [formData, setFormData] = useState({
-      name: '',
-      email: '',
-      status: 'Active',
-      spent: '$0.00',
-      orders: 0,
-      avatar: 'NewUser'
-  });
-
-const getStatusStyles = (status) => {
-  switch (status?.toLowerCase()) {
-    case 'completed':
-      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-    case 'pending':
-      return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-    case 'cancelled':
-      return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-    default:
-      return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-  }
-};
-
-  const fetchData = async () => {
+  async function fetchData() {
     try {
       setLoading(true);
-      // 2. Use the new service here
-      const data = await CustomerService.getCustomers(0,500); 
-       const totalOrders= totalOrder(data);
-       const totalSpends = totalSpend(data);
+      const data = await CustomerService.getCustomers(0, 500);
       setCustomers(data);
-      setOrder(totalOrders);
-      setSpend(totalSpends);
-    
-      
     } catch (error) {
       console.error("Failed to load customers", error);
-      // Optional: Add toast notification here
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleOpenAdd = () => {
-      setEditingCustomer(null);
-      setFormData({
-          name: '',
-          email: '',
-          status: 'Active',
-          spent: '$0.00',
-          orders: 0,
-          avatar: `User${Math.floor(Math.random() * 100)}`
-      });
-      setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (customer) => {
-      setEditingCustomer(customer);
-      setFormData(customer);
-      setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id) => {
-      if (confirm('Are you sure you want to delete this customer?')) {
-          // 3. Update delete logic
-          await CustomerService.deleteCustomer(id);
-          fetchData();
-      }
-  };
-
-  const handleSubmit = async (e) => {
-      e.preventDefault();
-      // 4. Update submit logic
-      if (editingCustomer) {
-          await CustomerService.updateCustomer(editingCustomer.id, formData);
-      } else {
-          await CustomerService.addCustomer({ ...formData, lastActive: 'Just now' });
-      }
-      setIsModalOpen(false);
+  async function handleToggleStatus(customer) {
+    const currentActive = customer.address?.is_active !== false;
+    try {
+      await CustomerService.updateStatus(customer.customer_id, !currentActive);
       fetchData();
-  };
+    } catch (err) {
+      alert('Failed to update status: ' + err.message);
+    }
+  }
+
+  function openNote(customer) {
+    setNoteModal(customer);
+    setNoteText(customer.address?.admin_note || '');
+  }
+
+  async function saveNote() {
+    setSaving(true);
+    try {
+      await CustomerService.updateNote(noteModal.customer_id, noteText);
+      setNoteModal(null);
+      fetchData();
+    } catch (err) {
+      alert('Failed to save note: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const filtered = customers.filter(c => {
+    const isActive = c.address?.is_active !== false;
+    const note = c.address?.admin_note || '';
+    const matchSearch = (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (c.email || '').toLowerCase().includes(search.toLowerCase());
+    const matchGender = !filters.gender || (c.gender || '').toLowerCase() === filters.gender.toLowerCase();
+    const matchStatus = !filters.status ||
+      (filters.status === 'active' ? isActive : !isActive);
+    const matchBirthday = !filters.birthday || (c.birthday || '').includes(filters.birthday);
+    const matchNote = !filters.note ||
+      (filters.note === 'has' ? !!note : !note);
+    return matchSearch && matchGender && matchStatus && matchBirthday && matchNote;
+  });
+
+  const inputCls = "bg-slate-950 text-white px-3 py-2 rounded-lg border border-slate-700 focus:outline-none focus:border-blue-500 text-sm";
 
   return (
     <div className="space-y-6">
-       {/* ... (Rest of your JSX remains exactly the same) ... */}
-       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Customers</h1>
-          <p className="text-slate-400">Manage and view your customer base.</p>
-        </div>
-        <div className="flex gap-2">
-            <button className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors">
-                <Filter size={18} />
-                <span>Filter</span>
-            </button>
-            <button 
-                onClick={handleOpenAdd}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors font-medium flex items-center gap-2"
-            >
-                <Plus size={18} />
-                Add Customer
-            </button>
-        </div>
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-white">Customers</h1>
+        <p className="text-slate-400">View and manage your customer base.</p>
       </div>
 
       <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
-        {/* Table Search */}
-        <div className="p-4 border-b border-slate-800">
-             <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={18} />
-                <input 
-                    type="text" 
-                    placeholder="Search customers..." 
-                    className="w-full bg-slate-950 text-white pl-10 pr-4 py-2 rounded-lg border border-slate-700 focus:outline-none focus:border-blue-500"
-                />
-            </div>
+        {/* Filters */}
+        <div className="p-4 border-b border-slate-800 flex flex-wrap gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <input type="text" placeholder="Search name or email..." value={search}
+              onChange={e => setSearch(e.target.value)}
+              className={`pl-9 w-56 ${inputCls}`} />
+          </div>
+          <select value={filters.gender} onChange={e => setFilters(f => ({ ...f, gender: e.target.value }))} className={inputCls}>
+            <option value="">All Genders</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+          <select value={filters.status} onChange={e => setFilters(f => ({ ...f, status: e.target.value }))} className={inputCls}>
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="stopped">Stopped</option>
+          </select>
+          <input type="text" placeholder="Birthday (e.g. 1990)" value={filters.birthday}
+            onChange={e => setFilters(f => ({ ...f, birthday: e.target.value }))}
+            className={`w-40 ${inputCls}`} />
+          <select value={filters.note} onChange={e => setFilters(f => ({ ...f, note: e.target.value }))} className={inputCls}>
+            <option value="">All Notes</option>
+            <option value="has">Has Note</option>
+            <option value="none">No Note</option>
+          </select>
+          {(search || filters.gender || filters.status || filters.birthday || filters.note) && (
+            <button onClick={() => { setSearch(''); setFilters({ gender: '', status: '', birthday: '', note: '' }); }}
+              className="px-3 py-2 text-xs text-slate-400 hover:text-white bg-slate-800 rounded-lg transition-colors">
+              Clear
+            </button>
+          )}
+          <span className="ml-auto text-xs text-slate-500 self-center">{filtered.length} results</span>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-                <thead>
-                    <tr className="bg-slate-900/50 text-slate-400 text-sm border-b border-slate-800">
-                        <th className="py-4 px-6 font-medium">Customer</th>
-                        <th className="py-4 px-6 font-medium">Contact</th>
-                        <th className="py-4 px-6 font-medium">Orders</th>
-                        <th className="py-4 px-6 font-medium">Total Spent</th>
-                        <th className="py-4 px-6 font-medium">Status</th>
-                        <th className="py-4 px-6 font-medium text-right">Action</th>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-900/50 text-slate-400 text-sm border-b border-slate-800">
+                <th className="py-4 px-6 font-medium">Customer</th>
+                <th className="py-4 px-6 font-medium">Email</th>
+                <th className="py-4 px-6 font-medium">Gender</th>
+                <th className="py-4 px-6 font-medium">Birthday</th>
+                <th className="py-4 px-6 font-medium">Note</th>
+                <th className="py-4 px-6 font-medium">Status</th>
+                <th className="py-4 px-6 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm">
+              {loading ? (
+                <tr><td colSpan={7} className="py-8 text-center text-slate-500">Loading...</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={7} className="py-8 text-center text-slate-500">No customers found.</td></tr>
+              ) : (
+                filtered.map((customer, idx) => {
+                  const isActive = customer.address?.is_active !== false;
+                  const note = customer.address?.admin_note;
+                  return (
+                    <tr key={customer.customer_id ?? idx} className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors last:border-0">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                            {(customer.name || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-medium text-white">{customer.name || '—'}</div>
+                            {customer.is_admin && <div className="text-xs text-blue-400">Admin</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2 text-slate-300">
+                          <Mail size={14} />{customer.email || '—'}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-slate-300 capitalize">{customer.gender || '—'}</td>
+                      <td className="py-4 px-6 text-slate-300">{customer.birthday || '—'}</td>
+                      <td className="py-4 px-6 text-slate-400 text-xs max-w-[150px] truncate">
+                        {note || <span className="text-slate-600 italic">No note</span>}
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isActive ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
+                          {isActive ? 'Active' : 'Stopped'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => openNote(customer)} title="Add/Edit Note"
+                            className="text-slate-500 hover:text-blue-400 p-2 hover:bg-slate-800 rounded-lg transition-colors">
+                            <FileText size={16} />
+                          </button>
+                          <button onClick={() => handleToggleStatus(customer)} title={isActive ? 'Stop Account' : 'Activate Account'}
+                            className={`p-2 rounded-lg transition-colors ${isActive ? 'text-slate-500 hover:text-rose-400 hover:bg-slate-800' : 'text-slate-500 hover:text-emerald-400 hover:bg-slate-800'}`}>
+                            {isActive ? <Ban size={16} /> : <CheckCircle size={16} />}
+                          </button>
+                        </div>
+                      </td>
                     </tr>
-                </thead>
-                <tbody className="text-sm">
-  {loading ? (
-    <tr>
-      <td colSpan={6} className="py-8 text-center text-slate-500">
-        Loading...
-      </td>
-    </tr>
-  ) : (
-    customers.map((customer, idx) => (
-      <tr
-        key={customer.id ?? customer._id ?? `${customer.email ?? "no-email"}-${idx}`}
-        className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors last:border-0"
-      >
-        <td className="py-4 px-6">
-          <div className="flex items-center gap-3">
-            <img
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${customer.avatar}`}
-              alt={customer.id}
-              className="w-10 h-10 rounded-full bg-slate-700"
-            />
-            <div>
-              <div className="font-medium text-white">{customer.username}</div>
-              <div className="text-xs text-slate-400">{customer.lastActive}</div>
-            </div>
-          </div>
-        </td>
-
-        <td className="py-4 px-6">
-          <div className="flex items-center gap-2 text-slate-300">
-            <Mail size={14} />
-            {customer.Email}
-          </div>
-        </td>
-
-        <td className="py-4 px-6 text-slate-300">{customer.ordersCount}</td>
-        <td className="py-4 px-6 font-medium text-white">{customer.email}</td>
-
-        <td className="py-3 md:py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusStyles(customer.status)}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                          customer.status === 'Completed' ? 'bg-emerald-400' : 
-                          customer.status === 'Pending' ? 'bg-amber-400' : 'bg-rose-400'
-                        }`}></span>
-                        {customer.status}
-                      </span>
-                    </td>
-
-        <td className="py-4 px-6 text-right">
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => handleOpenEdit(customer)}
-              className="text-slate-500 hover:text-blue-400 transition-colors p-2 hover:bg-slate-800 rounded-lg"
-            >
-              <Edit2 size={16} />
-            </button>
-            <button
-              onClick={() => handleDelete(customer.id ?? customer._id)}
-              className="text-slate-500 hover:text-rose-400 transition-colors p-2 hover:bg-slate-800 rounded-lg"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        </td>
-      </tr>
-    ))
-  )}
-</tbody>
-
-            </table>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-       {/* Customer Modal - Keep existing JSX */}
-       <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title={editingCustomer ? "Edit Customer" : "Add Customer"}
-      >
-          <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Name</label>
-                  <input 
-                      type="text" 
-                      required
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                      value={formData.name}
-                      onChange={e => setFormData({...formData, name: e.target.value})}
-                  />
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Email</label>
-                  <input 
-                      type="email" 
-                      required
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                      value={formData.email}
-                      onChange={e => setFormData({...formData, email: e.target.value})}
-                  />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                   <div>
-                      <label className="block text-sm font-medium text-slate-400 mb-1">Total Spent</label>
-                      <input 
-                          type="text" 
-                          className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                          value={formData.spent}
-                          onChange={e => setFormData({...formData, spent: e.target.value})}
-                      />
-                  </div>
-                  <div>
-                      <label className="block text-sm font-medium text-slate-400 mb-1">Status</label>
-                      <select 
-                          className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                          value={formData.status}
-                          onChange={e => setFormData({...formData, status: e.target.value})}
-                      >
-                          <option>Active</option>
-                          <option>Inactive</option>
-                      </select>
-                  </div>
-              </div>
-
-              <div className="pt-4 flex justify-end gap-3">
-                  <button 
-                      type="button" 
-                      onClick={() => setIsModalOpen(false)}
-                      className="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-                  >
-                      Cancel
-                  </button>
-                  <button 
-                      type="submit"
-                      className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-2"
-                  >
-                      <Save size={18} />
-                      Save
-                  </button>
-              </div>
-          </form>
-      </Modal>
+      {noteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="text-lg font-bold text-white mb-1">Admin Note</h2>
+            <p className="text-slate-400 text-sm mb-4">Customer: {noteModal.name} ({noteModal.email})</p>
+            <textarea value={noteText} onChange={e => setNoteText(e.target.value)} rows={4}
+              placeholder="Write a note about this customer..."
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 resize-none mb-4" />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setNoteModal(null)} className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">Cancel</button>
+              <button onClick={saveNote} disabled={saving} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50">
+                {saving ? 'Saving...' : 'Save Note'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,77 +1,33 @@
-// services/CustomerService.js
-
-// 1. Define your backend URL (Adjust env variable name as needed)
-const API_URL = (process.env.NEXT_PUBLIC_CUSTOMER_SERVICE_URL || 'http://localhost:8003/').replace(/\/$/, '');
+// src/lib/CustomerService.js
+const API_URL = process.env.LOGIN_SERVICE_URL || 'http://localhost:8004';
 
 export class CustomerService {
-  /**
-   * Fetch all customers
-   */
-  static async getCustomers(skip = 0, limit = 100) {
-    try {
-      // Use URL builder for safety
-      const url = new URL(`${API_URL}/orders`);
-      url.searchParams.append('skip', skip.toString());
-      url.searchParams.append('limit', limit.toString());
-      
-      console.log("Fetching Customers URL:", url.toString());
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-        cache: 'no-store', // Ensure fresh data
-      });
-
-   
-
-      if (!response.ok) {
-        const errorBody = await response.text().catch(() => 'No error details');
-        throw new Error(`HTTP error! status: ${response.status} - ${errorBody}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-      throw error;
-    }
+  static async getCustomers(skip = 0, limit = 500) {
+    const res = await fetch(`${API_URL}/api/auth/users?skip=${skip}&limit=${limit}`, {
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(`Failed to fetch customers: ${res.status}`);
+    return await res.json();
   }
 
-  /**
-   * Add a new customer
-   */
-  static async addCustomer(customerData) {
-    const response = await fetch(`${API_URL}/customers`, {
-      method: 'POST',
+  static async updateNote(customerId, note) {
+    const res = await fetch(`${API_URL}/api/auth/users/${customerId}/note`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(customerData),
+      body: JSON.stringify({ note }),
     });
-    if (!response.ok) throw new Error('Failed to add customer');
-    return await response.json();
+    if (!res.ok) throw new Error('Failed to update note');
+    return await res.json();
   }
 
-  /**
-   * Update an existing customer
-   */
-  static async updateCustomer(id, customerData) {
-    const response = await fetch(`${API_URL}/customers/${id}`, {
-      method: 'PUT', // or PATCH
+  static async updateStatus(customerId, isActive) {
+    const res = await fetch(`${API_URL}/api/auth/users/${customerId}/status`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(customerData),
+      body: JSON.stringify({ is_active: isActive }),
     });
-    if (!response.ok) throw new Error('Failed to update customer');
-    return await response.json();
-  }
-
-  /**
-   * Delete a customer
-   */
-  static async deleteCustomer(id) {
-    const response = await fetch(`${API_URL}/customers/${id}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) throw new Error('Failed to delete customer');
-    return true;
+    if (!res.ok) throw new Error('Failed to update status');
+    return await res.json();
   }
 }

@@ -1,131 +1,110 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Search, ShoppingBag, Eye, Trash2, Download, RefreshCcw } from 'lucide-react';
+import { Search, RefreshCcw } from 'lucide-react';
 import { OrderService } from '@/lib/OrderService';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState({ minTotal: '', maxTotal: '', minItems: '', maxItems: '' });
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const data = await OrderService.getRecentOrders();
-      setOrders(Array.isArray(data) ? data : data.orders || []);
+      const data = await OrderService.getRecentOrders(0, 500);
+      setOrders(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Dashboard Error:", error);
+      console.error("Failed to fetch orders:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  useEffect(() => { fetchOrders(); }, []);
 
-  const getStatusStyles = (status) => {
-    const s = status?.toLowerCase();
-    if (s === 'completed' || s === 'delivered') 
-      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-    if (s === 'pending' || s === 'processing') 
-      return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-    return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-  };
+  const filtered = orders.filter(o => {
+    const total = parseFloat(o.totalAmount || 0);
+    const items = o.items?.length ?? 0;
+    const matchSearch = String(o.orderId || '').includes(search) || String(o.user_id || '').includes(search);
+    const matchMinTotal = !filters.minTotal || total >= parseFloat(filters.minTotal);
+    const matchMaxTotal = !filters.maxTotal || total <= parseFloat(filters.maxTotal);
+    const matchMinItems = !filters.minItems || items >= parseInt(filters.minItems);
+    const matchMaxItems = !filters.maxItems || items <= parseInt(filters.maxItems);
+    return matchSearch && matchMinTotal && matchMaxTotal && matchMinItems && matchMaxItems;
+  });
+
+  const inputCls = "bg-slate-950 text-white px-3 py-2 rounded-xl border border-slate-800 focus:border-indigo-500 outline-none text-sm";
 
   return (
     <div className="p-6 space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Order Intelligence</h1>
-          <p className="text-slate-400 text-sm font-medium">Monitoring real-time transaction flow.</p>
+          <h1 className="text-2xl font-black text-white tracking-tight">Orders</h1>
+          <p className="text-slate-400 text-sm">All customer orders.</p>
         </div>
-        <div className="flex gap-2">
-          <button 
-            onClick={fetchOrders}
-            className="p-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 border border-slate-700 transition-all"
-          >
-            <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all font-black text-sm shadow-lg shadow-indigo-500/20">
-            <ShoppingBag size={18} /> New Order
-          </button>
-        </div>
+        <button onClick={fetchOrders} className="p-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 border border-slate-700 transition-all">
+          <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} />
+        </button>
       </div>
 
-      {/* Table Card */}
       <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
-        <div className="p-4 border-b border-slate-800 bg-slate-900/50 flex flex-col md:flex-row gap-4 justify-between">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-            <input 
-              type="text" 
-              placeholder="Filter by Order ID or Customer..." 
-              className="w-full bg-slate-950 text-white pl-10 pr-4 py-2 rounded-xl border border-slate-800 focus:border-indigo-500 outline-none transition-all text-sm"
-            />
+        <div className="p-4 border-b border-slate-800 flex flex-wrap gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <input type="text" placeholder="Order ID or Customer ID..." value={search}
+              onChange={e => setSearch(e.target.value)} className={`pl-9 w-52 ${inputCls}`} />
           </div>
-          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-xl border border-slate-700 text-sm font-bold hover:text-white transition-colors">
-            <Download size={16} /> Export Data
-          </button>
+          <input type="number" placeholder="Min Total (€)" value={filters.minTotal}
+            onChange={e => setFilters(f => ({ ...f, minTotal: e.target.value }))} className={`w-32 ${inputCls}`} />
+          <input type="number" placeholder="Max Total (€)" value={filters.maxTotal}
+            onChange={e => setFilters(f => ({ ...f, maxTotal: e.target.value }))} className={`w-32 ${inputCls}`} />
+          <input type="number" placeholder="Min Items" value={filters.minItems}
+            onChange={e => setFilters(f => ({ ...f, minItems: e.target.value }))} className={`w-28 ${inputCls}`} />
+          <input type="number" placeholder="Max Items" value={filters.maxItems}
+            onChange={e => setFilters(f => ({ ...f, maxItems: e.target.value }))} className={`w-28 ${inputCls}`} />
+          {(search || filters.minTotal || filters.maxTotal || filters.minItems || filters.maxItems) && (
+            <button onClick={() => { setSearch(''); setFilters({ minTotal: '', maxTotal: '', minItems: '', maxItems: '' }); }}
+              className="px-3 py-2 text-xs text-slate-400 hover:text-white bg-slate-800 rounded-xl transition-colors">
+              Clear
+            </button>
+          )}
+          <span className="ml-auto text-xs text-slate-500 self-center">{filtered.length} results</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-black border-b border-slate-800 bg-slate-900/50">
-                <th className="py-5 px-8">Order ID</th>
-                <th className="py-5 px-6">Customer</th>
-                <th className="py-5 px-6">Timestamp</th>
-                <th className="py-5 px-6">Total</th>
-                <th className="py-5 px-6">Status</th>
-                <th className="py-5 px-8 text-right">Actions</th>
+                <th className="py-4 px-6">Order ID</th>
+                <th className="py-4 px-6">Customer ID</th>
+                <th className="py-4 px-6">Timestamp</th>
+                <th className="py-4 px-6">Total</th>
+                <th className="py-4 px-6">Items</th>
               </tr>
             </thead>
             <tbody className="text-sm">
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-24 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                      <span className="text-slate-500 font-bold tracking-widest text-xs uppercase">Syncing with Node Engine...</span>
-                    </div>
+                <tr><td colSpan={5} className="py-16 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-slate-500 text-xs uppercase tracking-widest">Loading orders...</span>
+                  </div>
+                </td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={5} className="py-16 text-center text-slate-500">No orders found.</td></tr>
+              ) : filtered.map((order, index) => (
+                <tr key={order.orderId ?? index} className="border-b border-slate-800/50 hover:bg-indigo-500/5 transition-all">
+                  <td className="py-4 px-6 font-mono text-xs font-bold text-indigo-400">
+                    #{String(order.orderId || '').padStart(6, '0')}
                   </td>
-                </tr>
-              ) : orders.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-20 text-center text-slate-500 font-bold">No transactions found.</td>
-                </tr>
-              ) : orders.map((order, index) => (
-                <tr key={order.id || order._id || index} className="border-b border-slate-800/50 hover:bg-indigo-500/5 transition-all group">
-                  <td className="py-5 px-8 font-mono text-xs font-bold text-indigo-400">
-                    #{order.id?.toString().slice(-8).toUpperCase()}
+                  <td className="py-4 px-6 text-slate-300">{order.user_id || '—'}</td>
+                  <td className="py-4 px-6 text-slate-400 whitespace-nowrap">
+                    {order.orderDate ? new Date(order.orderDate).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
                   </td>
-                  <td className="py-5 px-6">
-                    <div className="font-bold text-slate-200">{order.customer_name || 'Anonymous'}</div>
-                    <div className="text-[10px] text-slate-500 font-medium">{order.customer_email || 'no-email@store.ai'}</div>
-                  </td>
-                  <td className="py-5 px-6 text-slate-400 font-medium whitespace-nowrap">
-                    {order.created_at ? new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                  </td>
-                  <td className="py-5 px-6 font-black text-white text-base">
-                    ${(order.total_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-5 px-6">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusStyles(order.status)}`}>
-                      {order.status || 'Unknown'}
-                    </span>
-                  </td>
-                  <td className="py-5 px-8 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                      <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors border border-transparent hover:border-slate-700">
-                        <Eye size={16} />
-                      </button>
-                      <button className="p-2 hover:bg-rose-500/10 rounded-lg text-slate-400 hover:text-rose-500 transition-colors border border-transparent hover:border-rose-500/20">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+                  <td className="py-4 px-6 font-black text-white">€{parseFloat(order.totalAmount || 0).toFixed(2)}</td>
+                  <td className="py-4 px-6 text-slate-400">{order.items?.length ?? 0} item{(order.items?.length ?? 0) !== 1 ? 's' : ''}</td>
                 </tr>
               ))}
             </tbody>
